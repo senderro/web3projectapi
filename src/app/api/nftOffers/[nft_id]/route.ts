@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { Client } from "xrpl";
 
 export async function GET(request: Request, { params }: { params: { nft_id: string } }) {
-  const { nft_id } = params;
+  const nft_id  = params.nft_id;
 
   try {
     // Conectar ao XRPL

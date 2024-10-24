@@ -1,35 +1,71 @@
 "use client"; // Garantir que estamos no lado do cliente
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import sdk from '@crossmarkio/sdk';
 
 const LoginButton: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [nfts, setNfts] = useState<any[]>([]); // Guardar NFTs pendentes
-  const [walletAddress, setWalletAddress] = useState<string>(''); // Armazenar o endereço da carteira
+  const [nfts, setNfts] = useState<any[]>([]);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
+  // Verificar sessão ao carregar a página
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const res = await fetch('/api/session');
+        if (res.ok) {
+          const session = await res.json();
+          if (session.isLoggedIn && session.address) {
+            setWalletAddress(session.address);
+            setMessage(`Conectado como: ${session.address}`);
+            // Buscar NFTs pendentes
+            fetchNFTs(session.address);
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao verificar sessão:", error);
+      }
+    };
+
+    checkSession();
+  }, []);
+
+  const fetchNFTs = async (address: string) => {
+    try {
+      const res = await fetch(`/api/mintNFT/${address}`);
+      const nftData = await res.json();
+
+      if (nftData.nfts?.length > 0) {
+        setNfts(nftData.nfts);
+      } else {
+        setMessage("Nenhum NFT esperando para ser aceito.");
+      }
+    } catch (error) {
+      console.error("Erro ao buscar NFTs:", error);
+    }
+  };
+
+  // Função de login
   const handleLogin = async () => {
     setLoading(true);
     try {
-      // Usando a Crossmark SDK para fazer login
       const { response } = await sdk.methods.signInAndWait();
 
       if (response.data && response.data.address) {
         const address = response.data.address;
         setWalletAddress(address);
         setMessage(`Conectado com sucesso: ${address}`);
-        console.log('Endereço da carteira:', address);
 
-        // Buscar NFTs pendentes e ofertas de venda no backend
-        const res = await fetch(`/api/mintNFT/${address}`);
-        const nftData = await res.json();
+        // Salvar sessão no servidor
+        await fetch('/api/login', {
+          method: 'POST',
+          body: JSON.stringify({ address }),
+          headers: { 'Content-Type': 'application/json' },
+        });
 
-        if (nftData.nfts && nftData.nfts.length > 0) {
-          setNfts(nftData.nfts); // Atualiza a lista de NFTs pendentes com as ofertas
-        } else {
-          setMessage("Nenhum NFT esperando para ser aceito.");
-        }
+        // Buscar NFTs pendentes
+        fetchNFTs(address);
       } else {
         setMessage('Erro ao conectar');
       }
@@ -41,33 +77,44 @@ const LoginButton: React.FC = () => {
     }
   };
 
-  // Função para buscar ofertas de venda de um NFT
-  const fetchNftSellOffers = async (nftID: string) => {
+  // Função de logout
+  const handleLogout = async () => {
+    setLoading(true);
     try {
-      const res = await fetch(`/api/nftOffers/${nftID}`);
-      const offersData = await res.json();
-      return offersData.offers;
+      await fetch('/api/logout', { method: 'POST' });
+      setWalletAddress(null);
+      setNfts([]);
+      setMessage("Desconectado com sucesso.");
     } catch (error) {
-      console.error("Erro ao buscar ofertas de venda:", error);
-      return [];
+      console.error("Erro ao fazer logout:", error);
+      setMessage("Erro ao fazer logout.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const acceptNFT = async (nftOfferIndex: string) => {
+  const acceptNFT = async (nftOfferIndex: string, nftID: string) => {
     try {
       setLoading(true);
       setMessage('Aceitando NFT...');
 
-      // Usar o método correto para assinar e enviar a transação
-      const { request, response, createdAt, resolvedAt } = await sdk.async.signAndSubmitAndWait({
+      const { response } = await sdk.async.signAndSubmitAndWait({
         TransactionType: "NFTokenAcceptOffer",
-        NFTokenSellOffer: nftOfferIndex, // Usar o nftOfferIndex aqui
+        NFTokenSellOffer: nftOfferIndex,
       });
 
       if (response) {
         setMessage('NFT aceito com sucesso!');
-        // Atualizar o status do NFT aceito (remover da lista de NFTs pendentes)
-        setNfts(nfts.filter(nft => nft.nftID !== nftOfferIndex));
+        // Atualiza o status do NFT aceito no banco de dados
+        await fetch(`/api/updateNFTStatus`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ nftID }),
+        });
+        // Atualiza a lista de NFTs pendentes
+        setNfts(nfts.filter(nft => nft.nftID !== nftID));
       } else {
         setMessage('Erro ao aceitar NFT.');
       }
@@ -81,37 +128,47 @@ const LoginButton: React.FC = () => {
 
   return (
     <div className="flex justify-center items-center h-screen bg-gray-100">
-      <button
-        onClick={handleLogin}
-        className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300"
-        disabled={loading}
-      >
-        {loading ? 'Conectando...' : 'Login'}
-      </button>
+      {!walletAddress ? (
+        <button
+          onClick={handleLogin}
+          className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300"
+          disabled={loading}
+        >
+          {loading ? 'Conectando...' : 'Login'}
+        </button>
+      ) : (
+        <div>
+          <p>Bem-vindo, {walletAddress}</p>
+          <button
+            onClick={handleLogout}
+            className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300"
+            disabled={loading}
+          >
+            Logout
+          </button>
+        </div>
+      )}
+
       {message && <p>{message}</p>}
 
-      {/* Listando NFTs pendentes */}
       {nfts.length > 0 && (
         <div>
           <h3>NFTs pendentes para aceitação:</h3>
           {nfts.map((nft) => (
             <div key={nft.nftID} className="mb-4">
               <p>NFT ID: {nft.nftID}</p>
-
-              {/* Buscar ofertas de venda para o NFT */}
               <button
                 onClick={async () => {
-                  const offers = await fetchNftSellOffers(nft.nftID);
-                  if (offers.length > 0) {
-                    const nftOfferIndex = offers[0].nft_offer_index;
-                    acceptNFT(nftOfferIndex);
+                  const nftOfferIndex = nft.offers[0]?.nft_offer_index;
+                  if (nftOfferIndex) {
+                    acceptNFT(nftOfferIndex, nft.nftID);
                   } else {
                     setMessage("Nenhuma oferta de venda disponível para este NFT.");
                   }
                 }}
                 className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
               >
-                Buscar e Aceitar Ofertas
+                Aceitar Oferta
               </button>
             </div>
           ))}

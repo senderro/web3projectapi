@@ -3,7 +3,7 @@ import prisma from '../../../../../lib/prisma';
 import { Client } from 'xrpl';
 
 export async function GET(request: Request, { params }: { params: { address: string } }) {
-  const address = params.address;
+  const {address} = await params;
 
   if (!address) {
     return NextResponse.json({ message: 'Endereço não fornecido.' }, { status: 400 });
