@@ -3,7 +3,7 @@ import { Client, Wallet, convertStringToHex, NFTokenMint, NFTokenCreateOffer } f
 import prisma from '../../../../lib/prisma';
 
 const secretSeed = process.env.SECRET_SEED;
-const nftURI = "https://moccasin-quickest-mongoose-160.mypinata.cloud/ipfs/QmQB5sWbyRCvJoMp3P12EncdnJLLYy4tGE1FXUSDVoT8tc"; // URI estática por enquanto
+const nftURI = "https://moccasin-quickest-mongoose-160.mypinata.cloud/ipfs/QmaAQdh7fUVr9vzsfvqJKccGF2r2ZZ1DDmNp6oPaSpk2KL"; // URI estática por enquanto
 
 export async function POST(request: Request) {
   try {

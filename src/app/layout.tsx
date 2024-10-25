@@ -1,6 +1,6 @@
-// app/layout.tsx
 import type { Metadata } from "next";
 import "./globals.css";
+import Navbar from "@/components/navBar";
 
 // Defina os metadados básicos da página
 export const metadata: Metadata = {
@@ -16,7 +16,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        {children}
+        <Navbar/>
+        <main>{children}</main>
       </body>
     </html>
   );
