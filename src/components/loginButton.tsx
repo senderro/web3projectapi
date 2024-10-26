@@ -5,6 +5,10 @@
 import React, { useState, useEffect } from 'react';
 import sdk from '@crossmarkio/sdk';
 
+import { useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
+
+
 interface LoginButtonProps {
   onLoginSuccess: (walletAddress: string) => void;
   onLogout: () => void;
@@ -14,7 +18,8 @@ const LoginButton: React.FC<LoginButtonProps> = ({ onLoginSuccess, onLogout }) =
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
-
+  const router = useRouter();
+  const pathname = usePathname();
   // Verificar sessão ao carregar a página
   useEffect(() => {
     const checkSession = async () => {
@@ -56,6 +61,7 @@ const LoginButton: React.FC<LoginButtonProps> = ({ onLoginSuccess, onLogout }) =
 
         // Passar o endereço da carteira para o componente pai
         onLoginSuccess(address);
+        router.push('/')
       } else {
         setMessage('Erro ao conectar');
       }
@@ -75,6 +81,7 @@ const LoginButton: React.FC<LoginButtonProps> = ({ onLoginSuccess, onLogout }) =
       setWalletAddress(null);
       setMessage("Desconectado com sucesso.");
       onLogout();
+      router.push('/')
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
       setMessage("Erro ao fazer logout.");
@@ -95,7 +102,6 @@ const LoginButton: React.FC<LoginButtonProps> = ({ onLoginSuccess, onLogout }) =
         </button>
       ) : (
         <div>
-          <p>Bem-vindo, {walletAddress}</p>
           <button
             onClick={handleLogout}
             className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300"

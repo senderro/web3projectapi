@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import LoginButton from './loginButton';
 
 const Navbar: React.FC = () => {
+
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
   // Função chamada ao fazer login com sucesso
@@ -30,7 +31,7 @@ const Navbar: React.FC = () => {
 
       {walletAddress && (
         <div className="text-sm mt-2">
-          Conectado como: <span className="font-bold">{walletAddress}</span>
+        The best place to buy, sell and dev in WEB3
         </div>
       )}
     </nav>

@@ -5,6 +5,7 @@ import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
+
 // Função para obter a sessão atual do lado do servidor
 export const getSession = async () => {
     const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
@@ -37,13 +38,11 @@ export const login = async (address: string) => {
     }
 
     try {
-        // Neste ponto, você pode adicionar lógica de verificação do usuário, como buscar no banco de dados.
-        // Suponha que o login seja bem-sucedido:
+       
         session.address = address;
         session.isLoggedIn = true;
         await session.save();  // Salvar a sessão
 
-        // Redirecionar para a página de perfil, ou qualquer outro lugar
     } catch (error) {
         console.error("Erro ao fazer login:", error);
         return { error: "Erro ao fazer login." };
@@ -55,5 +54,6 @@ export const logout = async () => {
     const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
 
     session.destroy();  // Destruir a sessão
-    redirect("/");  // Redirecionar para a página inicial
+    
+
 };
