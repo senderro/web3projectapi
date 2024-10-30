@@ -29,6 +29,9 @@ importers:
       react-dom:
         specifier: 19.0.0-rc-69d4b800-20241021
         version: 19.0.0-rc-69d4b800-20241021(react@19.0.0-rc-69d4b800-20241021)
+      ripple-keypairs:
+        specifier: ^2.0.0
+        version: 2.0.0(bufferutil@4.0.8)
     devDependencies:
       '@types/node':
         specifier: ^20
