@@ -1,0 +1,30 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+model MintedNFTSForUsers {
+  id              Int      @id @default(autoincrement())
+  nftID           String   @unique
+  receiveAddress  String
+  createByAddress String
+  accepted        Boolean  @default(false)  // Novo campo adicionado
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model DevUser {
+  id              Int      @id @default(autoincrement())
+  publicAddress   String   @unique
+  activated       Boolean? @default(false)  // Inicialmente desativado
+  password        String   @default("")     // Senha do desenvolvedor
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
