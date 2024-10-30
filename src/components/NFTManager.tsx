@@ -57,7 +57,7 @@ const NFTManager: React.FC<NFTManagerProps> = ({ walletAddress }) => {
           body: JSON.stringify({ nftID }),
         });
         // Atualiza a lista de NFTs pendentes
-        setNfts(nfts.filter(nft => nft.NFTokenID !== nftID));
+        setNfts(nfts.filter(nft => nft.nftID !== nftID));
       } else {
         setMessage('Erro ao aceitar NFT.');
       }
@@ -76,13 +76,13 @@ const NFTManager: React.FC<NFTManagerProps> = ({ walletAddress }) => {
         <div>
           <h3>NFTs pendentes para aceitação:</h3>
           {nfts.map((nft) => (
-            <div key={nft.NFTokenID} className="mb-4">
-              <p>NFT ID: {nft.NFTokenID}</p>
+            <div key={nft.nftID} className="mb-4">
+              <p>NFT ID: {nft.nftID}</p>
               <button
                 onClick={async () => {
                   const nftOfferIndex = nft.offers[0]?.nft_offer_index;
                   if (nftOfferIndex) {
-                    acceptNFT(nftOfferIndex, nft.NFTokenID);
+                    acceptNFT(nftOfferIndex, nft.nftID);
                   } else {
                     setMessage("Nenhuma oferta de venda disponível para este NFT.");
                   }

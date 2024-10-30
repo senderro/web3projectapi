@@ -71,14 +71,6 @@ const DevOptions: React.FC = () => {
     }
       const amount = "10000000";
 
-      // Transação de pagamento usando o SDK Crossmark
-      const paymentTransaction = {
-        TransactionType: "Payment",
-        Account: userAddress, // O endereço do usuário que está logado
-        Amount: amount,
-        Destination: destinationAddress,
-      };
-
       // Usando o Crossmark SDK para assinar e enviar a transação
       const { response } = await sdk.async.signAndSubmitAndWait({
         TransactionType:"Payment",

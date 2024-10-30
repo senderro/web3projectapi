@@ -9,15 +9,6 @@ interface NFTCardProps {
 }
 
 const NFTCardAcceptOffer: React.FC<NFTCardProps> = ({ nftID, createByAddress, onAccept }) => {
-  // Função para converter a URI hexadecimal para uma string legível
-  const convertHexToString = (hex: string) => {
-    try {
-      const str = Buffer.from(hex, 'hex').toString('utf8');
-      return str;
-    } catch {
-      return hex; // Caso ocorra erro na conversão
-    }
-  };
 
   return (
     <div className="max-w-sm rounded overflow-hidden shadow-lg m-4 p-4 bg-white border border-gray-300">
