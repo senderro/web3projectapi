@@ -4,13 +4,14 @@
 
 import React, { useState, useEffect } from 'react';
 import sdk from '@crossmarkio/sdk';
+import { NFT } from '@/interfaces';
 
 interface NFTManagerProps {
   walletAddress: string;
 }
 
 const NFTManager: React.FC<NFTManagerProps> = ({ walletAddress }) => {
-  const [nfts, setNfts] = useState<any[]>([]);
+  const [nfts, setNfts] = useState<NFT[]>([]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -56,7 +57,7 @@ const NFTManager: React.FC<NFTManagerProps> = ({ walletAddress }) => {
           body: JSON.stringify({ nftID }),
         });
         // Atualiza a lista de NFTs pendentes
-        setNfts(nfts.filter(nft => nft.nftID !== nftID));
+        setNfts(nfts.filter(nft => nft.NFTokenID !== nftID));
       } else {
         setMessage('Erro ao aceitar NFT.');
       }
@@ -70,17 +71,18 @@ const NFTManager: React.FC<NFTManagerProps> = ({ walletAddress }) => {
 
   return (
     <div>
+       {loading && <p>Carregando...</p>}
       {nfts.length > 0 && (
         <div>
           <h3>NFTs pendentes para aceitação:</h3>
           {nfts.map((nft) => (
-            <div key={nft.nftID} className="mb-4">
-              <p>NFT ID: {nft.nftID}</p>
+            <div key={nft.NFTokenID} className="mb-4">
+              <p>NFT ID: {nft.NFTokenID}</p>
               <button
                 onClick={async () => {
                   const nftOfferIndex = nft.offers[0]?.nft_offer_index;
                   if (nftOfferIndex) {
-                    acceptNFT(nftOfferIndex, nft.nftID);
+                    acceptNFT(nftOfferIndex, nft.NFTokenID);
                   } else {
                     setMessage("Nenhuma oferta de venda disponível para este NFT.");
                   }

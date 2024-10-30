@@ -2,9 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import NFTCard from '@/components/NFTCard';
+import { AccountNFToken } from 'xrpl';
+
+
 
 const UserNFTs = () => {
-  const [nfts, setNfts] = useState<any[]>([]);
+  const [nfts, setNfts] = useState<AccountNFToken[]>([]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -66,7 +69,6 @@ const UserNFTs = () => {
             nftID={nft.NFTokenID}
             issuer={nft.Issuer}
             uri={nft.URI}
-            owner={nft.Owner}
           />
         ))}
       </div>

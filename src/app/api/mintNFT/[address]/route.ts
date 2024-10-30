@@ -1,9 +1,11 @@
+//this code return all nfts with offers for a user
+
 import { NextResponse } from 'next/server';
 import prisma from '../../../../../lib/prisma';
 import { Client } from 'xrpl';
 
-export async function GET(request: Request, { params }: { params: { address: string } }) {
-  const {address} = await params;
+export async function GET(request: Request, { params }: { params: Promise<{ address: string }> }) {
+  const address = (await params).address;
 
   if (!address) {
     return NextResponse.json({ message: 'Endereço não fornecido.' }, { status: 400 });
@@ -35,13 +37,12 @@ export async function GET(request: Request, { params }: { params: { address: str
         });
 
         const offers = response.result.offers || [];
-        return { ...nft, offers }; // Retorna o NFT com suas ofertas
+        return { ...nft, offers };
       })
     );
 
     await client.disconnect();
 
-    // Retorna os NFTs encontrados com as ofertas associadas
     return NextResponse.json({ nfts: nftsWithOffers }, { status: 200 });
 
   } catch (error) {

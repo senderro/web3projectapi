@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { Client } from 'xrpl';
+import { AccountNFToken, Client } from 'xrpl';
 
 export async function GET(request: Request) {
   try {
@@ -27,10 +27,10 @@ export async function GET(request: Request) {
 
     await client.disconnect();
 
-    const nfts = accountNFTsResponse.result.account_nfts;
+    const nfts: AccountNFToken[] = accountNFTsResponse.result.account_nfts;
 
     // Procura o NFT específico pelo seu ID
-    const nft = nfts.find((nft: any) => nft.NFTokenID === nftID);
+    const nft = nfts.find((nft: AccountNFToken) => nft.NFTokenID === nftID);
 
     if (!nft) {
       return NextResponse.json({ message: 'NFT não encontrado.' }, { status: 404 });

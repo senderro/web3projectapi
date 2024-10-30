@@ -19,3 +19,12 @@ model MintedNFTSForUsers {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
+
+model DevUser {
+  id              Int      @id @default(autoincrement())
+  publicAddress   String   @unique
+  activated       Boolean? @default(false)  // Inicialmente desativado
+  password        String   @default("")     // Senha do desenvolvedor
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

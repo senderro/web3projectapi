@@ -5,11 +5,10 @@ import React from 'react';
 interface NFTCardProps {
   nftID: string;
   issuer: string;
-  uri: string;
-  owner: string;
+  uri?: string;
 }
 
-const NFTCard: React.FC<NFTCardProps> = ({ nftID, issuer, uri, owner }) => {
+const NFTCard: React.FC<NFTCardProps> = ({ nftID, issuer, uri="" }) => {
   // Função para converter a URI hexadecimal para uma string legível
   const convertHexToString = (hex: string) => {
     try {
@@ -26,9 +25,6 @@ const NFTCard: React.FC<NFTCardProps> = ({ nftID, issuer, uri, owner }) => {
         <div className="font-bold text-xl mb-2">NFT ID: {nftID}</div>
         <p className="text-gray-700 text-base">
           <strong>Issuer:</strong> {issuer}
-        </p>
-        <p className="text-gray-700 text-base">
-          <strong>Owner:</strong> {owner}
         </p>
         <p className="text-gray-700 text-base">
           <strong>URI:</strong> {convertHexToString(uri)}

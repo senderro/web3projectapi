@@ -1,9 +1,8 @@
-// src/app/api/nftOffers/[nft_id]/route.ts
 import { NextResponse } from 'next/server';
 import { Client } from "xrpl";
 
-export async function GET(request: Request, { params }: { params: { nft_id: string } }) {
-  const nft_id  = params.nft_id;
+export async function GET(request: Request, { params }: { params: Promise<{ nft_id: string }> }) {
+  const nft_id  = (await params).nft_id;
 
   try {
     // Conectar ao XRPL

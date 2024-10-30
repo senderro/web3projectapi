@@ -6,7 +6,6 @@ import React, { useState, useEffect } from 'react';
 import sdk from '@crossmarkio/sdk';
 
 import { useRouter } from 'next/navigation'
-import { usePathname } from 'next/navigation'
 
 
 interface LoginButtonProps {
@@ -19,7 +18,6 @@ const LoginButton: React.FC<LoginButtonProps> = ({ onLoginSuccess, onLogout }) =
   const [message, setMessage] = useState('');
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const router = useRouter();
-  const pathname = usePathname();
   // Verificar sessão ao carregar a página
   useEffect(() => {
     const checkSession = async () => {

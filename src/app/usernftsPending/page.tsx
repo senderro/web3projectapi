@@ -3,13 +3,8 @@
 import React, { useEffect, useState } from "react";
 import NFTCardAcceptOffer from "@/components/NFTCardAcceptOffer";
 import sdk from '@crossmarkio/sdk'; // Importando o SDK do Crossmark
+import { NFT } from "@/interfaces";
 
-interface NFT {
-  nftID: string;
-  offers: any[]; // Lista de ofertas associadas ao NFT
-  receiveAddress: string;
-  createByAddress: string;
-}
 
 const UserNFTs: React.FC = () => {
   const [nfts, setNfts] = useState<NFT[]>([]);
@@ -156,9 +151,7 @@ const UserNFTs: React.FC = () => {
             <NFTCardAcceptOffer
               key={nft.nftID}
               nftID={nft.nftID}
-              issuer={nft.createByAddress}
-              uri={nft.receiveAddress}
-              owner={nft.receiveAddress}
+              createByAddress={nft.createByAddress}
               onAccept={() => {
                 const offerIndex = nft.offers[0]?.nft_offer_index;
                 if (offerIndex) {

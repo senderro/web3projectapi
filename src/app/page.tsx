@@ -1,4 +1,3 @@
-import LoginButton from "@/components/loginButton";
 import MintNFTButton from "@/components/mintTestButton";
 
 // app/page.tsx

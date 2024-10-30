@@ -3,7 +3,6 @@
 import { sessionOptions, SessionData, defaultSession } from "./ironLib";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 
 
 // Função para obter a sessão atual do lado do servidor

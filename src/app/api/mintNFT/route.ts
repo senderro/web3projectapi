@@ -1,9 +1,21 @@
 import { NextResponse } from 'next/server';
-import { Client, Wallet, convertStringToHex, NFTokenMint, NFTokenCreateOffer } from 'xrpl';
+import { Client, Wallet, convertStringToHex, NFTokenMint, NFTokenCreateOffer, AccountNFToken } from 'xrpl';
 import prisma from '../../../../lib/prisma';
 
 const secretSeed = process.env.SECRET_SEED;
 const nftURI = "https://moccasin-quickest-mongoose-160.mypinata.cloud/ipfs/QmaAQdh7fUVr9vzsfvqJKccGF2r2ZZ1DDmNp6oPaSpk2KL"; // URI estática por enquanto
+
+interface mintNFTdata{
+  recipientAddress: string;
+  gameAddress: string;
+  gameMetada: string[];
+  image: string;
+  uri: string;
+  authAcess: {
+    authPassword: string;
+  }
+
+}
 
 export async function POST(request: Request) {
   try {
@@ -31,7 +43,7 @@ export async function POST(request: Request) {
     };
 
     // Envia a transação de mintagem
-    const mintTx = await client.submitAndWait(mintTransaction, { wallet });
+    await client.submitAndWait(mintTransaction, { wallet });
 
     // Pega o NFTokenID do NFT mintado
     const accountNFTs = await client.request({
@@ -40,7 +52,7 @@ export async function POST(request: Request) {
     });
 
     const mintedNFT = accountNFTs.result.account_nfts.find(
-      (nft: any) => nft.URI === convertStringToHex(nftURI)
+      (nft: AccountNFToken) => nft.URI === convertStringToHex(nftURI)
     );
 
     if (!mintedNFT) {
@@ -78,7 +90,7 @@ export async function POST(request: Request) {
     };
 
     // Submete a oferta de transferência
-    const offerTx = await client.submitAndWait(offerTransaction, { wallet });
+    await client.submitAndWait(offerTransaction, { wallet });
 
     // Desconecta o cliente após o processo
     await client.disconnect();

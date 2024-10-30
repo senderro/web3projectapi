@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { Client } from 'xrpl';
+import { AccountNFToken, Client } from 'xrpl';
 
-export async function GET(request: Request, { params }: { params: { address: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ address: string }> }) {
   try {
-    const { address } = await params;
+    const address = (await params).address;
 
     if (!address) {
       return NextResponse.json({ message: 'Endereço de conta não fornecido.' }, { status: 400 });
@@ -28,7 +28,7 @@ export async function GET(request: Request, { params }: { params: { address: str
     const issuerAddress = process.env.PUBLIC_ADDRESS as string;
 
     // Filtra os NFTs emitidos pelo seu endereço público
-    const filteredNFTs = nfts.filter((nft: any) => nft.Issuer === issuerAddress);
+    const filteredNFTs = nfts.filter((nft: AccountNFToken) => nft.Issuer === issuerAddress);
 
     return NextResponse.json({
       message: `Encontrados ${filteredNFTs.length} NFTs emitidos pelo seu endereço.`,
