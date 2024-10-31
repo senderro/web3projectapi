@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { Client, Wallet, convertStringToHex, NFTokenMint, NFTokenCreateOffer, AccountNFToken } from 'xrpl';
 import prisma from '../../../../lib/prisma';
 import { IMintNFT } from '@/interfaces';
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       );
     }
     //colocar auth aqui
-    
+
 
     // Prepara os dados para envio ao Pinata
     const pinataData = {
@@ -118,3 +118,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Erro ao mintar NFT ou criar oferta.' }, { status: 500 });
   }
 }
+
+
+export const OPTIONS = async (req: NextRequest) => {
+  // Retorna 200 para a requisição preflight OPTIONS
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    },
+  });
+};
