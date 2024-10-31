@@ -121,7 +121,7 @@ export async function POST(request: Request) {
 
 
 export const OPTIONS = async (req: NextRequest) => {
-  // Retorna 200 para a requisição preflight OPTIONS
+  console.log(req);
   return new NextResponse(null, {
     status: 200,
     headers: {
