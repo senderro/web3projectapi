@@ -3,6 +3,7 @@ import { Client, Wallet, convertStringToHex, NFTokenMint, NFTokenCreateOffer, Ac
 import prisma from '../../../../lib/prisma';
 import { IMintNFT } from '@/interfaces';
 import { pinata } from '../../../../lib/pinataconfig';
+import cors from '../../../../lib/cors';
 
 const secretSeed = process.env.SECRET_SEED;
 
@@ -120,12 +121,11 @@ export async function POST(request: Request) {
 }
 
 
-export async function OPTIONS() {
-  const headers = new Headers();
-  headers.set('Access-Control-Allow-Origin', '*');
-  headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  // Responde a pré-solicitação OPTIONS com um status 200
-  return new NextResponse(null, { headers, status: 200 });
+export async function OPTIONS(request: Request) {
+  return cors(
+    request,
+    new Response(null, {
+      status: 204,
+    })
+  );
 }
