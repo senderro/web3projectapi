@@ -9,5 +9,21 @@ export interface NFT {
     accepted: boolean;
     createdAt: Date;
     updatedAt: Date;
-  }
+}
+
+
+export interface IAuth{
+  message: string;  
+  signature: string;  
+  publicKey: string;
+}
   
+
+export interface IMintNFT {
+  auth: IAuth;  
+  recipientAddress: string;  
+  base64image: string; 
+  name: string; 
+  description: string; 
+  gameMetadata: Record<string, string>;
+}

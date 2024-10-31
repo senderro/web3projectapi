@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import prisma from '../../../../lib/prisma';
-
+import { IAuth } from '@/interfaces';
 //import * as rippleKeypairs from 'ripple-keypairs';
 
 export async function POST(request: Request) {
   try {
-    const { message, signature, publicKey } = await request.json();
+    const { message, signature, publicKey } : IAuth= await request.json();
 
     if (!message || !signature || !publicKey) {
       return NextResponse.json(
@@ -17,6 +17,7 @@ export async function POST(request: Request) {
     const devUser = await prisma.devUser.findUnique({
       where: {
         publicAddress: publicKey,
+        activated: true,
       },
     });
 

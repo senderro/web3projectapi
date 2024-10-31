@@ -1,16 +1,40 @@
 import { NextResponse } from 'next/server';
 import { Client, Wallet, convertStringToHex, NFTokenMint, NFTokenCreateOffer, AccountNFToken } from 'xrpl';
 import prisma from '../../../../lib/prisma';
+import { IMintNFT } from '@/interfaces';
+import { pinata } from '../../../../lib/pinataconfig';
 
 const secretSeed = process.env.SECRET_SEED;
-const nftURI = "https://moccasin-quickest-mongoose-160.mypinata.cloud/ipfs/QmaAQdh7fUVr9vzsfvqJKccGF2r2ZZ1DDmNp6oPaSpk2KL"; // URI estática por enquanto
 
 export async function POST(request: Request) {
   try {
-    const { recipientAddress } = await request.json();
+    const { auth, recipientAddress, base64image, name, description, gameMetadata }: IMintNFT = await request.json();
 
-    if (!secretSeed || !recipientAddress) {
-      return NextResponse.json({ message: 'Seed ou endereço de destino não encontrado.' }, { status: 400 });
+    // Validação básica
+    if (!secretSeed || !auth || !auth.message || !auth.signature || !auth.publicKey || !recipientAddress || !base64image || !name || !description) {
+      return NextResponse.json(
+        { message: 'Todos os campos são obrigatórios.' },
+        { status: 400 }
+      );
+    }
+    //colocar auth aqui
+
+
+    // Prepara os dados para envio ao Pinata
+    const pinataData = {
+      name,
+      description,
+      base64image,
+      gameMetadata,
+      timeofmint: new Date().toISOString(),
+    };
+
+    // Envia o JSON para o Pinata e obtém o hash IPFS
+    const pinataResponse = await pinata.upload.json(pinataData);
+    const ipfsHash = pinataResponse.IpfsHash; // IPFS hash do JSON enviado
+
+    if (!ipfsHash) {
+      throw new Error('Falha ao obter o IPFS hash do Pinata.');
     }
 
     // Conecta no XRPL Testnet
@@ -24,7 +48,7 @@ export async function POST(request: Request) {
     const mintTransaction: NFTokenMint = {
       TransactionType: 'NFTokenMint',
       Account: wallet.classicAddress,
-      URI: convertStringToHex(nftURI),
+      URI: convertStringToHex(ipfsHash),
       Flags: 8, // Transferível
       TransferFee: 0,
       NFTokenTaxon: 0, // Taxon arbitrário
@@ -40,7 +64,7 @@ export async function POST(request: Request) {
     });
 
     const mintedNFT = accountNFTs.result.account_nfts.find(
-      (nft: AccountNFToken) => nft.URI === convertStringToHex(nftURI)
+      (nft: AccountNFToken) => nft.URI === convertStringToHex(ipfsHash)
     );
 
     if (!mintedNFT) {
