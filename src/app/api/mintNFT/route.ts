@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       );
     }
     //colocar auth aqui
-
+    
 
     // Prepara os dados para envio ao Pinata
     const pinataData = {
