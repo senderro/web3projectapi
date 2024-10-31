@@ -1,21 +1,28 @@
-// middleware.ts
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export function middleware(req: NextRequest) {
-  const res = NextResponse.next();
-
   if (req.nextUrl.pathname.startsWith('/api')) {
-    res.headers.set('Access-Control-Allow-Origin', '*');
-    res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.headers.set('Access-Control-Allow-Credentials', 'true');
+    const response = NextResponse.next();
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    response.headers.set(
+      'Access-Control-Allow-Headers',
+      'Content-Type, Authorization'
+    );
+
+    if (req.method === 'OPTIONS') {
+      return new NextResponse(null, {
+        headers: response.headers,
+        status: 200,
+      });
+    }
+
+    return response;
   }
 
-  return res;
+  return NextResponse.next();
 }
 
-// Define o matcher para interceptar apenas rotas de API
 export const config = {
   matcher: '/api/:path*',
 };

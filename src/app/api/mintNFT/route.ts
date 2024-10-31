@@ -1,5 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
-import type { NextApiRequest, NextApiResponse } from 'next';
+import { NextResponse } from 'next/server';
 import { Client, Wallet, convertStringToHex, NFTokenMint, NFTokenCreateOffer, AccountNFToken } from 'xrpl';
 import prisma from '../../../../lib/prisma';
 import { IMintNFT } from '@/interfaces';
@@ -121,36 +120,12 @@ export async function POST(request: Request) {
 }
 
 
-export const OPTIONS = async (req: NextRequest) => {
-  console.log(req);
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    },
-  });
-};
+export async function OPTIONS() {
+  const headers = new Headers();
+  headers.set('Access-Control-Allow-Origin', '*');
+  headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Configuração CORS
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-  
-  // Verificação de método
-  if (req.method === 'OPTIONS') {
-    res.status(200).end()
-    return
-  }
-  
-  if (req.method === 'POST') {
-    // Lógica para o método POST
-    res.status(200).json({ message: 'NFT mintado com sucesso!' })
-  } else {
-    res.setHeader('Allow', ['POST', 'OPTIONS'])
-    res.status(405).end(`Method ${req.method} Not Allowed`)
-  }
+  // Responde a pré-solicitação OPTIONS com um status 200
+  return new NextResponse(null, { headers, status: 200 });
 }
