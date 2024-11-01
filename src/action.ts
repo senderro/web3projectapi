@@ -29,21 +29,27 @@ export const getSessionClient = async () => {
 
 // Função de login
 export const login = async (address: string) => {
+    console.log('Action login - Iniciando para endereço:', address);
     const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
 
-    // Verifique o endereço da carteira (ou outros critérios que você precise)
     if (!address) {
+        console.log('Action login - Endereço não fornecido');
         return { error: "Endereço da carteira não fornecido." };
     }
 
     try {
-       
         session.address = address;
         session.isLoggedIn = true;
-        await session.save();  // Salvar a sessão
-
+        await session.save();
+        
+        console.log('Action login - Sessão salva com sucesso:', {
+            address: session.address,
+            isLoggedIn: session.isLoggedIn
+        });
+        
+        return { success: true };
     } catch (error) {
-        console.error("Erro ao fazer login:", error);
+        console.error("Action login - Erro:", error);
         return { error: "Erro ao fazer login." };
     }
 };

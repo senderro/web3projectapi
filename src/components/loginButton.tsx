@@ -43,31 +43,46 @@ const LoginButton: React.FC<LoginButtonProps> = ({ onLoginSuccess, onLogout }) =
   const handleLogin = async () => {
     setLoading(true);
     try {
+      console.log('Iniciando login com Crossmark...');
+      console.log('SDK instance:', sdk); // Verificar se o SDK está disponível
+      
+      // Verificar se o método existe
+      if (!sdk.methods || !sdk.methods.signInAndWait) {
+        throw new Error('Método signInAndWait não encontrado');
+      }
+
       const { response } = await sdk.methods.signInAndWait();
 
       if (response.data && response.data.address) {
         const address = response.data.address;
-        setWalletAddress(address);
-        setMessage(`Conectado com sucesso: ${address}`);
+        console.log('Endereço obtido:', address);
 
-        // Salvar sessão no servidor
-        await fetch('/api/login', {
+        // Fazer login no servidor
+        const loginResponse = await fetch('/api/login', {
           method: 'POST',
           body: JSON.stringify({ address }),
           headers: { 'Content-Type': 'application/json' },
         });
 
-        // Passar o endereço da carteira para o componente pai
+        console.log('Status da resposta login:', loginResponse.status);
+        const data = await loginResponse.json();
+        console.log('Dados da resposta:', data);
+
+        if (!loginResponse.ok) {
+          throw new Error('Falha no login: ' + (data.error || 'Erro desconhecido'));
+        }
+
+        setWalletAddress(address);
+        setMessage(`Conectado com sucesso: ${address}`);
         onLoginSuccess(address);
-        router.push('/')
+        router.push('/');
       } else {
-        setMessage('Erro ao conectar');
+        throw new Error('Endereço não recebido do Crossmark');
       }
     } catch (error) {
-      console.error('Erro ao conectar com Crossmark:', error);
-      setMessage('Erro ao conectar');
-    } finally {
-      setLoading(false);
+      console.error('Erro detalhado:', error);
+      setMessage(`Erro ao conectar: ${error.message}`);
+      setLoading(false); // Importante: garantir que loading seja false em caso de erro
     }
   };
 
