@@ -3,7 +3,6 @@ import { Client, Wallet, convertStringToHex, NFTokenMint, NFTokenCreateOffer, Ac
 import prisma from '../../../../lib/prisma';
 import { IMintNFT } from '@/interfaces';
 import { pinata } from '../../../../lib/pinataconfig';
-import cors from '../../../../lib/cors';
 
 const secretSeed = process.env.SECRET_SEED;
 
@@ -118,14 +117,4 @@ export async function POST(request: Request) {
     console.error('Erro ao mintar NFT e criar oferta de transferência:', error);
     return NextResponse.json({ message: 'Erro ao mintar NFT ou criar oferta.' }, { status: 500 });
   }
-}
-
-
-export async function OPTIONS(request: Request) {
-  return cors(
-    request,
-    new Response(null, {
-      status: 204,
-    })
-  );
 }
