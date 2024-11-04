@@ -28,7 +28,6 @@ const LoginButton: React.FC<LoginButtonProps> = ({ onLoginSuccess, onLogout }) =
           if (session.isLoggedIn && session.address) {
             setWalletAddress(session.address);
             onLoginSuccess(session.address);
-            setMessage(`Conectado como: ${session.address}`);
           }
         }
       } catch (error) {

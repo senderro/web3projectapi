@@ -48,39 +48,10 @@ const UserNFTs: React.FC = () => {
   };
 
   // Função para verificar se o usuário adquiriu o NFT após aceitar
-  const verifyNFTOwnership = async (nftID: string) => {
-    try {
-      const res = await fetch("/api/session");
-      if (res.ok) {
-        const session = await res.json();
-        const address = session.address;
-
-        if (!address) {
-          setErrorMessage("Usuário não conectado.");
-          return false;
-        }
-
-        // Espera 5 segundos antes de verificar se o usuário recebeu o NFT
-        await new Promise((resolve) => setTimeout(resolve, 5000));
-
-        const checkRes = await fetch(`/api/getAccountNFTs/${address}`);
-        const checkData = await checkRes.json();
-
-        if (checkRes.ok && checkData.nfts) {
-          const nftReceived = checkData.nfts.some((nft: NFT) => nft.nftID === nftID);
-          return nftReceived;
-        }
-
-        return false;
-      } else {
-        setErrorMessage("Erro ao verificar sessão.");
-        return false;
-      }
-    } catch (error) {
-      console.error("Erro ao verificar propriedade do NFT:", error);
-      setErrorMessage("Erro ao verificar propriedade do NFT.");
-      return false;
-    }
+  const refreshNftsPage = async () => {
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+    setErrorMessage("Recarregando NFTs");
+    fetchNFTs();
   };
 
   // Função para aceitar um NFT com Crossmark e verificar a propriedade
@@ -95,32 +66,21 @@ const UserNFTs: React.FC = () => {
         NFTokenSellOffer: offerIndex,
       });
 
-      if (response) {
-        setErrorMessage("NFT aceito com sucesso! Verificando se o NFT foi transferido...");
+      if (response.data.meta.isSuccess) {
+        setErrorMessage("NFT transferido com sucesso!");
 
-        // Verifica se o NFT foi transferido após 5 segundos
-        const nftReceived = await verifyNFTOwnership(nftID);
+        const res = await fetch('/api/updateNFTStatus', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ nftID }),
+        });
 
-        if (nftReceived) {
-          setErrorMessage("NFT transferido com sucesso!");
-
-          // Após confirmar a transferência, atualiza o status no backend
-          const res = await fetch('/api/updateNFTStatus', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ nftID }),
-          });
-
-          if (!res.ok) {
-            setErrorMessage("Erro ao atualizar status do NFT no backend.");
-          } else {
-            // Atualiza a lista de NFTs após a aceitação
-            fetchNFTs();
-          }
+        if (!res.ok) {
+          setErrorMessage("Erro ao atualizar status do NFT no backend.");
         } else {
-          setErrorMessage("O NFT ainda não foi transferido.");
+          fetchNFTs();
         }
       } else {
         setErrorMessage("Erro ao aceitar o NFT usando o Crossmark.");
@@ -129,7 +89,9 @@ const UserNFTs: React.FC = () => {
       console.error("Erro ao aceitar o NFT:", error);
       setErrorMessage("Erro ao aceitar o NFT.");
     } finally {
+      await refreshNftsPage();
       setLoading(false);
+      setErrorMessage("");
     }
   };
 
@@ -151,7 +113,7 @@ const UserNFTs: React.FC = () => {
             <NFTCardAcceptOffer
               key={nft.nftID}
               nftID={nft.nftID}
-              createByAddress={nft.createByAddress}
+              uri={nft.uri}
               onAccept={() => {
                 const offerIndex = nft.offers[0]?.nft_offer_index;
                 if (offerIndex) {

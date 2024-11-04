@@ -3,7 +3,7 @@ import prisma from '../../../../lib/prisma';
 
 export async function POST(request: Request) {
   try {
-    const { publicAddress, tipo, password = '' } = await request.json();
+    const { publicAddress, tipo, password = '', base64image = '' } = await request.json();
 
     // Verifica se o publicAddress foi fornecido
     if (!publicAddress) {
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
           return NextResponse.json({ message: 'Usuário não encontrado.' }, { status: 404 });
         }
 
-      case 1: 
+      case 1: // Ativar ou criar Dev User
         const existingDevUser = await prisma.devUser.findUnique({
           where: {
             publicAddress: publicAddress,
@@ -77,6 +77,23 @@ export async function POST(request: Request) {
         });
 
         return NextResponse.json({ message: 'Senha atualizada com sucesso.', user: result3 }, { status: 200 });
+
+      case 3: // Atualizar imagem em base64 do Dev User
+        if (!base64image) {
+          return NextResponse.json({ message: 'Imagem base64 não fornecida.' }, { status: 400 });
+        }
+
+        // Atualiza o campo da imagem do DevUser no banco de dados
+        const result4 = await prisma.devUser.update({
+          where: {
+            publicAddress: publicAddress,
+          },
+          data: {
+            profileImage: base64image,
+          },
+        });
+
+        return NextResponse.json({ message: 'Imagem atualizada com sucesso.', user: result4 }, { status: 200 });
 
       default:
         return NextResponse.json({ message: 'Tipo de operação inválido.' }, { status: 400 });

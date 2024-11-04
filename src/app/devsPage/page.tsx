@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import sdk from "@crossmarkio/sdk";
+import BuyWeb3Coin from "@/components/buyWeb3Coin";
 
 const DevOptions: React.FC = () => {
   const [userAddress, setUserAddress] = useState<string | null>(null);
@@ -9,7 +10,10 @@ const DevOptions: React.FC = () => {
   const [message, setMessage] = useState<string>("");
   const [newPassword, setNewPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
-  const destinationAddress = process.env.PUBLIC_ADDRESS;
+  const [imageBase64, setImageBase64] = useState<string>(""); // Para armazenar a imagem em base64
+
+  //ok this is for test purpose, but dont have risk, its a public address
+  const destinationAddress = "rspgmhbbCRjkDbjFu4P2MX1agUGDEShYbf";
   
   useEffect(() => {
     const fetchUserSession = async () => {
@@ -59,31 +63,73 @@ const DevOptions: React.FC = () => {
     fetchUserSession();
   }, []);
 
+  // Função para converter a imagem em base64
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageBase64(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageUpload = async () => {
+    if (!userAddress || !imageBase64) {
+      setMessage("Erro: Endereço público ou imagem não encontrado.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await fetch("/api/devUser", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          publicAddress: userAddress,
+          tipo: 3, // Tipo 3 para atualizar a imagem
+          base64image: imageBase64,
+        }),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        setMessage("Imagem atualizada com sucesso.");
+      } else {
+        setMessage(result.message || "Erro ao atualizar a imagem.");
+      }
+    } catch (error) {
+      console.error("Erro ao enviar imagem:", error);
+      setMessage("Erro ao enviar imagem.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleActivateDevUser = async () => {
     try {
       setLoading(true);
       setMessage("Preparando a transação para ativar sua conta...");
-        // Verifica se o userAddress é válido (não null)
-    if (!userAddress) {
+      if (!userAddress) {
         setMessage("Erro: Endereço público não encontrado.");
         setLoading(false);
         return;
-    }
+      }
       const amount = "10000000";
 
-      // Usando o Crossmark SDK para assinar e enviar a transação
       const { response } = await sdk.async.signAndSubmitAndWait({
-        TransactionType:"Payment",
+        TransactionType: "Payment",
         Account: userAddress,
         Amount: amount,
-        Destination: destinationAddress
-
+        Destination: destinationAddress,
       });
 
       if (response.data.meta.isSuccess === true) {
         setMessage("Pagamento bem-sucedido. Ativando sua conta...");
 
-        // Agora que o pagamento foi confirmado, ativa a conta
         const activateRes = await fetch("/api/devUser", {
           method: "POST",
           headers: {
@@ -91,7 +137,7 @@ const DevOptions: React.FC = () => {
           },
           body: JSON.stringify({
             publicAddress: userAddress,
-            tipo: 1, // 1 para ativar a conta
+            tipo: 1,
           }),
         });
 
@@ -189,6 +235,27 @@ const DevOptions: React.FC = () => {
               >
                 Alterar Senha
               </button>
+              
+              {/* Upload de imagem */}
+              <div className="mt-6">
+                <label className="block mb-2 font-bold text-gray-700">Upload de Imagem:</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="mb-4"
+                />
+                <button
+                  className="bg-black hover:bg-opacity-80 text-white font-bold py-2 px-4 rounded-lg w-full"
+                  onClick={handleImageUpload}
+                >
+                  Atualizar Imagem
+                </button>
+              </div>
+              
+              {userAddress && destinationAddress && (
+                <BuyWeb3Coin address={userAddress} destinationAddress={destinationAddress} />
+              )}
             </div>
           </div>
         )}

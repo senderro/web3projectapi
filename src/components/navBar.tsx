@@ -1,10 +1,11 @@
 // components/Navbar.tsx
 "use client";
+
 import React, { useState } from 'react';
 import LoginButton from './loginButton';
+import Link from 'next/link';
 
 const Navbar: React.FC = () => {
-
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
   // Função chamada ao fazer login com sucesso
@@ -18,11 +19,26 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <nav className="bg-gray-800 p-4 text-white">
+    <nav className="bg-gray-800 p-4 text-white shadow-lg">
       <div className="container mx-auto flex justify-between items-center">
-        <h1 className="text-xl font-bold">NFT Marketplace</h1>
+        <div className="flex items-center space-x-4">
+          <h1 className="text-2xl font-bold">NFT Marketplace</h1>
+          <div className="hidden md:flex space-x-4">
+            <Link href="/" className="hover:text-gray-300">
+              Home
+            </Link>
+            <Link href="/usernfts" className="hover:text-gray-300">
+              User NFTs
+            </Link>
+            <Link href="/usernftsPending" className="hover:text-gray-300">
+              User NFTs Pending
+            </Link>
+            <Link href="/devsPage" className="hover:text-gray-300">
+              Devs Page
+            </Link>
+          </div>
+        </div>
 
-        {/* Passar as funções de login e logout como props */}
         <LoginButton
           onLoginSuccess={handleLoginSuccess}
           onLogout={handleLogout}
@@ -30,8 +46,8 @@ const Navbar: React.FC = () => {
       </div>
 
       {walletAddress && (
-        <div className="text-sm mt-2">
-        The best place to buy, sell and dev in WEB3
+        <div className="text-center mt-2 text-sm text-gray-300">
+          Logged in as: <span className="font-semibold">{walletAddress}</span>
         </div>
       )}
     </nav>

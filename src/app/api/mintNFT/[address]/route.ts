@@ -15,8 +15,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ addr
     // Consulta o banco de dados para buscar NFTs pendentes para o endereço fornecido
     const nfts = await prisma.mintedNFTSForUsers.findMany({
       where: {
-        receiveAddress: address, // Verifica se há NFTs para o endereço fornecido
-        accepted: false // Buscando apenas os NFTs que ainda não foram aceitos
+        receiveAddress: address,
+        accepted: false 
       },
     });
 

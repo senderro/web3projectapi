@@ -15,16 +15,20 @@ model MintedNFTSForUsers {
   nftID           String   @unique
   receiveAddress  String
   createByAddress String
-  accepted        Boolean  @default(false)  // Novo campo adicionado
+  uri             String   @default("")
+  accepted        Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
 
 model DevUser {
-  id              Int      @id @default(autoincrement())
-  publicAddress   String   @unique
-  activated       Boolean? @default(false)  // Inicialmente desativado
-  password        String   @default("")     // Senha do desenvolvedor
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id            Int      @id @default(autoincrement())
+  publicAddress String   @unique
+  activated     Boolean? @default(false)  
+  password      String   @default("")      
+  webhookLink   String?                    
+  web3Coin      Int      @default(0)     
+  profileImage  String?                     
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

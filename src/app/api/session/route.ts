@@ -22,7 +22,7 @@ export async function GET(request: Request) {
       );
     }
   } catch (error) {
-    console.error('Erro ao buscar sessão:', error);
+    console.log(error);
     return NextResponse.json({ message: 'Erro ao buscar sessão.' }, { status: 500 });
   }
 }

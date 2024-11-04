@@ -6,6 +6,15 @@ import { pinata } from '../../../../lib/pinataconfig';
 
 const secretSeed = process.env.SECRET_SEED;
 
+interface pinataDataMint {
+      name: string,
+      description: string,
+      base64image: string,
+      gameMetadata: Record<string, string>,
+      gameAddress: string,
+      timeofmint: string
+}
+
 export async function POST(request: Request) {
   try {
     const { auth, recipientAddress, base64image, name, description, gameMetadata }: IMintNFT = await request.json();
@@ -17,21 +26,41 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+    const gameAddress = auth.publicKey;
     //colocar auth aqui
 
 
     // Prepara os dados para envio ao Pinata
-    const pinataData = {
+    const pinataData: pinataDataMint = {
       name,
       description,
       base64image,
       gameMetadata,
+      gameAddress,
       timeofmint: new Date().toISOString(),
     };
 
+
+    const mintCost = calculateMintCost(pinataData, 10000);
+    const baseUrl = getBaseUrl(request);
+    const decreaseCoinsResponse = await fetch(`${baseUrl}/api/devUserDecreaseCoins/${gameAddress}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ amount: mintCost }),
+    });
+    
+    
+    if (!decreaseCoinsResponse.ok) {
+      const errorData = await decreaseCoinsResponse.json();
+      return NextResponse.json({ message: `Erro ao debitar web3Coins: ${errorData.message}` }, { status: 400 });
+    }
+
+
     // Envia o JSON para o Pinata e obtém o hash IPFS
     const pinataResponse = await pinata.upload.json(pinataData);
-    const ipfsHash = pinataResponse.IpfsHash; // IPFS hash do JSON enviado
+    const ipfsHash = pinataResponse.IpfsHash; 
 
     if (!ipfsHash) {
       throw new Error('Falha ao obter o IPFS hash do Pinata.');
@@ -87,7 +116,8 @@ export async function POST(request: Request) {
       data: {
         nftID: NFTokenID,
         receiveAddress: recipientAddress,
-        createByAddress: wallet.classicAddress,
+        createByAddress: gameAddress,
+        uri: ipfsHash
       },
     });
 
@@ -117,4 +147,27 @@ export async function POST(request: Request) {
     console.error('Erro ao mintar NFT e criar oferta de transferência:', error);
     return NextResponse.json({ message: 'Erro ao mintar NFT ou criar oferta.' }, { status: 500 });
   }
+}
+
+function calculateMintCost(data: pinataDataMint, bytesPerCoin: number = 100): number {
+  // 1. Converte os dados para JSON
+  const jsonData = JSON.stringify(data);
+
+  // 2. Calcula o tamanho em bytes
+  const dataSizeInBytes = new TextEncoder().encode(jsonData).length;
+
+  // 3. Calcula o número de web3Coins necessários
+  const costInWeb3Coins = Math.ceil(dataSizeInBytes / bytesPerCoin);
+
+  return costInWeb3Coins;
+}
+
+
+function getBaseUrl(req: Request | undefined) {
+  if (req) {
+    const protocol = req.headers.get("x-forwarded-proto") || "http";
+    const host = req.headers.get("host");
+    return `${protocol}://${host}`;
+  }
+  return process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 }

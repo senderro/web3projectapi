@@ -6,6 +6,7 @@ export interface NFT {
     nftID: string;
     receiveAddress: string;
     createByAddress: string;
+    uri: string;
     accepted: boolean;
     createdAt: Date;
     updatedAt: Date;
