@@ -13,13 +13,25 @@ export async function GET(request: Request, { params }: { params: Promise<{ addr
     const client = new Client('wss://s.altnet.rippletest.net:51233');
     await client.connect();
 
-    // Solicita os NFTs associados ao endereço fornecido
-    const accountNFTsResponse = await client.request({
-      command: 'account_nfts',
-      account: address,
-    });
+    let nfts: AccountNFToken[] = [];
+    let marker: string | undefined;
 
-    const nfts = accountNFTsResponse.result.account_nfts;
+    // Continuar solicitando até que todos os NFTs sejam obtidos
+    do {
+      const accountNFTsResponse = await client.request({
+        command: 'account_nfts',
+        account: address,
+        limit: 400,  // Limite máximo de NFTs por requisição
+        marker: marker,  // Usado para paginação, se houver mais resultados
+      });
+
+      // Adiciona os NFTs retornados à lista
+      nfts = nfts.concat(accountNFTsResponse.result.account_nfts);
+
+      // Atualiza o marker para continuar a paginação, se houver mais NFTs
+      marker = accountNFTsResponse.result.marker as string;
+
+    } while (marker); // Continua enquanto houver um marker para paginar
 
     // Desconecta o cliente XRPL
     await client.disconnect();

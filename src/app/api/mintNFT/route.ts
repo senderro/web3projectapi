@@ -27,8 +27,6 @@ export async function POST(request: Request) {
       );
     }
     const gameAddress = auth.publicKey;
-    //colocar auth aqui
-
 
     // Prepara os dados para envio ao Pinata
     const pinataData: pinataDataMint = {
@@ -40,7 +38,6 @@ export async function POST(request: Request) {
       timeofmint: new Date().toISOString(),
     };
 
-
     const mintCost = calculateMintCost(pinataData, 10000);
     const baseUrl = getBaseUrl(request);
     const decreaseCoinsResponse = await fetch(`${baseUrl}/api/devUserDecreaseCoins/${gameAddress}`, {
@@ -51,12 +48,10 @@ export async function POST(request: Request) {
       body: JSON.stringify({ amount: mintCost }),
     });
     
-    
     if (!decreaseCoinsResponse.ok) {
       const errorData = await decreaseCoinsResponse.json();
       return NextResponse.json({ message: `Erro ao debitar web3Coins: ${errorData.message}` }, { status: 400 });
     }
-
 
     // Envia o JSON para o Pinata e obtém o hash IPFS
     const pinataResponse = await pinata.upload.json(pinataData);
@@ -87,12 +82,28 @@ export async function POST(request: Request) {
     await client.submitAndWait(mintTransaction, { wallet });
 
     // Pega o NFTokenID do NFT mintado
-    const accountNFTs = await client.request({
-      command: 'account_nfts',
-      account: wallet.classicAddress,
-    });
+    let nfts: AccountNFToken[] = [];
+    let marker: string | undefined;
 
-    const mintedNFT = accountNFTs.result.account_nfts.find(
+    // Continuar solicitando até que todos os NFTs sejam obtidos
+    do {
+      const accountNFTsResponse = await client.request({
+        command: 'account_nfts',
+        account: wallet.classicAddress,
+        limit: 400,  // Limite máximo de NFTs por requisição
+        marker: marker,  // Usado para paginação, se houver mais resultados
+      });
+
+      // Adiciona os NFTs retornados à lista
+      nfts = nfts.concat(accountNFTsResponse.result.account_nfts);
+
+      // Atualiza o marker para continuar a paginação, se houver mais NFTs
+      marker = accountNFTsResponse.result.marker as string;
+
+    } while (marker); // Continua enquanto houver um marker para paginar
+
+    // Busca o NFT recém-mintado usando o URI convertido
+    const mintedNFT = nfts.find(
       (nft: AccountNFToken) => nft.URI === convertStringToHex(ipfsHash)
     );
 
@@ -161,7 +172,6 @@ function calculateMintCost(data: pinataDataMint, bytesPerCoin: number = 100): nu
 
   return costInWeb3Coins;
 }
-
 
 function getBaseUrl(req: Request | undefined) {
   if (req) {
