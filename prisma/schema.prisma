@@ -32,3 +32,36 @@ model DevUser {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
+
+model GameShopNFTs {
+  id          Int      @id @default(autoincrement())
+  gameAddress String 
+  uri         String   
+  quantidade  Int      
+  preco       Float    
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+
+model SoldNFTs {
+  id              Int      @id @default(autoincrement())
+  nftID           String   @unique 
+  receiveAddress  String
+  createByAddress String
+  accepted        Boolean  @default(false)
+  uri             String   @default("")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+
+model SoldNFTsUserTransfer {
+  id              Int      @id @default(autoincrement())
+  nftID           String   
+  receiveAddress  String
+  accepted        Boolean  @default(false)
+  uri             String   @default("")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

@@ -5,12 +5,12 @@ import NFTCardAcceptOffer from "@/components/NFTCardAcceptOffer";
 import sdk from '@crossmarkio/sdk';
 import { NFT } from "@/interfaces";
 
-const UserNFTs: React.FC = () => {
+const UserBoughtNFTs: React.FC = () => {
   const [nfts, setNfts] = useState<NFT[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const fetchNFTs = async () => {
+  const fetchBoughtNFTs = async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/session");
@@ -24,7 +24,7 @@ const UserNFTs: React.FC = () => {
           return;
         }
 
-        const nftRes = await fetch(`/api/mintNFT/${address}`);
+        const nftRes = await fetch(`/api/getBoughtNFTs/${address}`);
         const nftData = await nftRes.json();
 
         if (nftRes.ok && nftData.nfts) {
@@ -43,13 +43,13 @@ const UserNFTs: React.FC = () => {
     }
   };
 
-  const refreshNftsPage = async () => {
+  const refreshNFTsPage = async () => {
     await new Promise((resolve) => setTimeout(resolve, 5000));
     setErrorMessage("Refreshing NFTs...");
-    fetchNFTs();
+    fetchBoughtNFTs();
   };
 
-  const acceptNFTWithCrossmark = async (nftID: string, offerIndex: string) => {
+  const acceptBoughtNFT = async (nftID: string, offerIndex: string) => {
     try {
       setLoading(true);
       setErrorMessage("");
@@ -62,7 +62,7 @@ const UserNFTs: React.FC = () => {
       if (response.data.meta.isSuccess) {
         setErrorMessage("NFT successfully transferred!");
 
-        const res = await fetch('/api/updateNFTStatus', {
+        const res = await fetch('/api/updateBoughtNFTStatus', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -73,28 +73,28 @@ const UserNFTs: React.FC = () => {
         if (!res.ok) {
           setErrorMessage("Error updating NFT status in the backend.");
         } else {
-          fetchNFTs();
+          fetchBoughtNFTs();
         }
       } else {
-        setErrorMessage("Error accepting the NFT with Crossmark.");
+        setErrorMessage("Error accepting NFT with Crossmark.");
       }
     } catch (error) {
       console.error("Error accepting NFT:", error);
       setErrorMessage("Error accepting NFT.");
     } finally {
-      await refreshNftsPage();
+      await refreshNFTsPage();
       setLoading(false);
       setErrorMessage("");
     }
   };
 
   useEffect(() => {
-    fetchNFTs();
+    fetchBoughtNFTs();
   }, []);
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-gradient-to-r from-purple-600 to-indigo-800 p-6">
-      <h1 className="text-3xl font-bold text-white mb-8">Pending NFTs</h1>
+      <h1 className="text-3xl font-bold text-white mb-8">Pending Bought NFTs</h1>
 
       {loading ? (
         <p className="text-lg text-white animate-pulse">Loading NFTs...</p>
@@ -110,7 +110,7 @@ const UserNFTs: React.FC = () => {
               onAccept={() => {
                 const offerIndex = nft.offers[0]?.nft_offer_index;
                 if (offerIndex) {
-                  acceptNFTWithCrossmark(nft.nftID, offerIndex);
+                  acceptBoughtNFT(nft.nftID, offerIndex);
                 } else {
                   setErrorMessage("No available offer to accept.");
                 }
@@ -119,10 +119,10 @@ const UserNFTs: React.FC = () => {
           ))}
         </div>
       ) : (
-        <p className="text-white text-lg">No pending NFTs found.</p>
+        <p className="text-white text-lg">No pending bought NFTs found.</p>
       )}
     </div>
   );
 };
 
-export default UserNFTs;
+export default UserBoughtNFTs;

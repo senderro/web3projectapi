@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '../../../../lib/prisma';
 import { IAuth } from '@/interfaces';
-//import * as rippleKeypairs from 'ripple-keypairs';
+import * as rippleKeypairs from 'ripple-keypairs';
 
 export async function POST(request: Request) {
   try {
@@ -26,16 +26,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Usuário não encontrado.' }, { status: 404 });
     }
 
+    const messageHex = Buffer.from(message).toString('hex');
 
-    //for test purpose
-    // // Converter a mensagem para hex
-    // const messageHex = Buffer.from(message).toString('hex');
+    // Verificar a assinatura com a chave pública
+    const isValid = rippleKeypairs.verify(messageHex, signature, publicKey);
 
-    // // Verificar a assinatura com a chave pública
-    // const isValid = rippleKeypairs.verify(messageHex, signature, publicKey);
-
-    const isValid = true;
-    //
 
     if (isValid) {
       return NextResponse.json({ message: 'A assinatura é válida.' }, { status: 200 });

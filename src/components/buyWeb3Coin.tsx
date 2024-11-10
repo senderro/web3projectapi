@@ -1,41 +1,65 @@
-// components/BuyWeb3Coin.tsx
+"use client";
 
-"use client"; // Garantir que estamos no lado do cliente
-
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import sdk from '@crossmarkio/sdk';
 
 interface BuyWeb3CoinProps {
   address: string;
-  destinationAddress: string;
+  destinationAddress?: string;
 }
 
-const BuyWeb3Coin: React.FC<BuyWeb3CoinProps> = ({ address, destinationAddress="rspgmhbbCRjkDbjFu4P2MX1agUGDEShYbf" }) => {
+interface DevUserData {
+  web3Coin: number;
+}
+
+const BuyWeb3Coin: React.FC<BuyWeb3CoinProps> = ({
+  address,
+  destinationAddress = "rspgmhbbCRjkDbjFu4P2MX1agUGDEShYbf",
+}) => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [amount, setAmount] = useState<number>(0); // Quantidade de web3Coins a comprar
+  const [amount, setAmount] = useState<number>(0);
+  const [web3CoinBalance, setWeb3CoinBalance] = useState<number | null>(null);
 
+  useEffect(() => {
+    const fetchWeb3CoinBalance = async () => {
+      try {
+        const res = await fetch(`/api/devUser/${address}`);
+        if (res.ok) {
+          const data: { user: DevUserData } = await res.json();
+          setWeb3CoinBalance(data.user.web3Coin);
+        } else {
+          const errorData = await res.json();
+          setMessage(`Error fetching web3Coin balance: ${errorData.message}`);
+        }
+      } catch (error) {
+        console.error("Error fetching web3Coin balance:", error);
+        setMessage("Error fetching web3Coin balance.");
+      }
+    };
+
+    if (address) {
+      fetchWeb3CoinBalance();
+    }
+  }, [address]);
 
   const handleBuyCoins = async () => {
     if (!address) {
-      setMessage('Endereço da carteira não fornecido.');
+      setMessage('Wallet address not provided.');
       return;
     }
     if (!destinationAddress) {
-        setMessage('Endereço de destino não configurado. Contate o suporte.');
-        return;
-      }
+      setMessage('Destination address not configured. Please contact support.');
+      return;
+    }
 
-      
     setLoading(true);
     setMessage('');
-    
+
     try {
-      // Valor em XRP necessário para comprar a quantidade desejada de web3Coins
-      const amountXRP = (amount * 0.001).toFixed(6); // 1 web3Coin = 0,001 XRP
+      const amountXRP = (amount * 0.001).toFixed(6);
       const xrpAmountInDrops = (parseFloat(amountXRP) * 1000000).toString();
 
-      // Usando o Crossmark SDK para assinar e enviar a transação
       const { response } = await sdk.async.signAndSubmitAndWait({
         TransactionType: "Payment",
         Account: address,
@@ -44,9 +68,8 @@ const BuyWeb3Coin: React.FC<BuyWeb3CoinProps> = ({ address, destinationAddress="
       });
 
       if (response.data.meta.isSuccess === true) {
-        setMessage("Compra bem-sucedida. Atualizando saldo...");
+        setMessage("Transaction successful.");
 
-        // Atualiza o saldo de web3Coins do usuário no backend
         const res = await fetch(`/api/devUserBuyCoins/${address}`, {
           method: "PATCH",
           headers: {
@@ -56,17 +79,19 @@ const BuyWeb3Coin: React.FC<BuyWeb3CoinProps> = ({ address, destinationAddress="
         });
 
         if (res.ok) {
-          setMessage("Moedas compradas com sucesso!");
+          setMessage("Web3Coins purchased successfully!");
+          const updatedData = await res.json();
+          setWeb3CoinBalance(updatedData.updatedBalance);
         } else {
           const data = await res.json();
-          setMessage(`Erro ao atualizar saldo: ${data.message}`);
+          setMessage(`Error updating balance: ${data.message}`);
         }
       } else {
-        setMessage("Falha ao enviar a transação de pagamento.");
+        setMessage("Failed to send payment transaction.");
       }
     } catch (error) {
-      console.error("Erro ao realizar a compra:", error);
-      setMessage("Erro ao realizar a compra.");
+      console.error("Error making purchase:", error);
+      setMessage("Error making purchase.");
     } finally {
       setLoading(false);
     }
@@ -74,26 +99,35 @@ const BuyWeb3Coin: React.FC<BuyWeb3CoinProps> = ({ address, destinationAddress="
 
   return (
     <div className="buy-web3-coin">
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold text-gray-800">Buy Web3Coins</h1>
+        {web3CoinBalance !== null ? (
+          <p className="text-gray-700">Current Web3Coin balance: <strong>{web3CoinBalance}</strong></p>
+        ) : (
+          <p className="text-gray-700">Fetching Web3Coin balance...</p>
+        )}
+      </div>
       <div>
-        <label>
-          Quantidade de web3Coins:
+        <label className="block text-gray-700 font-medium">
+          Buy Web3Coins for minting NFTs:
           <input
             type="number"
             value={amount}
             onChange={(e) => setAmount(Number(e.target.value))}
-            className="border border-gray-300 rounded-lg p-2 ml-2"
+            className="border border-gray-300 rounded-lg p-2 ml-2 w-full"
             min="1"
           />
         </label>
       </div>
       <button
         onClick={handleBuyCoins}
-        className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md mt-4 transition duration-300"
+        className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md mt-4 transition duration-300 w-full"
         disabled={loading || amount <= 0}
       >
-        {loading ? "Comprando..." : "Comprar Moedas"}
+        {loading ? "Loading..." : "Buy Web3Coin"}
       </button>
-      {message && <p>{message}</p>}
+      <h2>1 XRP ~~ 1000 coins</h2>
+      {message && <p className="mt-4 text-red-600">{message}</p>}
     </div>
   );
 };

@@ -15,12 +15,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ad
       return NextResponse.json({ message: 'Valor de web3Coins inválido.' }, { status: 400 });
     }
 
-    // Atualiza o saldo de web3Coins do DevUser no banco de dados
+
     const user = await prisma.devUser.update({
       where: { publicAddress: address },
       data: {
         web3Coin: {
-          increment: amount, // Use decrement: amount se quiser diminuir
+          increment: amount,
         },
       },
     });

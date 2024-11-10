@@ -28,3 +28,11 @@ export interface IMintNFT {
   description: string; 
   gameMetadata: Record<string, string>;
 }
+
+
+
+export interface IBuyGameShopNFT {
+  recipientAddress: string;  
+  uri: string;
+  gameAddress: string;
+}

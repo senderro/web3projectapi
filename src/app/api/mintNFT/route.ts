@@ -18,7 +18,7 @@ interface pinataDataMint {
 export async function POST(request: Request) {
   try {
     const { auth, recipientAddress, base64image, name, description, gameMetadata }: IMintNFT = await request.json();
-
+    const baseUrl = getBaseUrl(request);
     // Validação básica
     if (!secretSeed || !auth || !auth.message || !auth.signature || !auth.publicKey || !recipientAddress || !base64image || !name || !description) {
       return NextResponse.json(
@@ -27,6 +27,20 @@ export async function POST(request: Request) {
       );
     }
     const gameAddress = auth.publicKey;
+
+    const authResponse = await fetch(`${baseUrl}/api/auth`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(auth),
+    });
+
+    if (authResponse.status!=200) {
+      const authErrorData = await authResponse.json();
+      return NextResponse.json({ message: `Authentication failed: ${authErrorData.message}` }, { status: 400 });
+    }
+
 
     // Prepara os dados para envio ao Pinata
     const pinataData: pinataDataMint = {
@@ -39,7 +53,6 @@ export async function POST(request: Request) {
     };
 
     const mintCost = calculateMintCost(pinataData, 10000);
-    const baseUrl = getBaseUrl(request);
     const decreaseCoinsResponse = await fetch(`${baseUrl}/api/devUserDecreaseCoins/${gameAddress}`, {
       method: "PATCH",
       headers: {

@@ -4,8 +4,9 @@ import React, { useEffect, useState } from "react";
 import NFTCardAcceptOffer from "@/components/NFTCardAcceptOffer";
 import sdk from '@crossmarkio/sdk';
 import { NFT } from "@/interfaces";
+import { convertHexToString } from "xrpl";
 
-const UserNFTs: React.FC = () => {
+const UserNFTsPendingTransfer: React.FC = () => {
   const [nfts, setNfts] = useState<NFT[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -24,7 +25,7 @@ const UserNFTs: React.FC = () => {
           return;
         }
 
-        const nftRes = await fetch(`/api/mintNFT/${address}`);
+        const nftRes = await fetch(`/api/getUserNftTransferOffer/${address}`);
         const nftData = await nftRes.json();
 
         if (nftRes.ok && nftData.nfts) {
@@ -43,13 +44,7 @@ const UserNFTs: React.FC = () => {
     }
   };
 
-  const refreshNftsPage = async () => {
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-    setErrorMessage("Refreshing NFTs...");
-    fetchNFTs();
-  };
-
-  const acceptNFTWithCrossmark = async (nftID: string, offerIndex: string) => {
+  const acceptNFTWithCrossmark = async (id: number, offerIndex: string) => {
     try {
       setLoading(true);
       setErrorMessage("");
@@ -62,12 +57,12 @@ const UserNFTs: React.FC = () => {
       if (response.data.meta.isSuccess) {
         setErrorMessage("NFT successfully transferred!");
 
-        const res = await fetch('/api/updateNFTStatus', {
+        const res = await fetch('/api/updateTransferNftStatus', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ nftID }),
+          body: JSON.stringify({ id }),
         });
 
         if (!res.ok) {
@@ -82,9 +77,15 @@ const UserNFTs: React.FC = () => {
       console.error("Error accepting NFT:", error);
       setErrorMessage("Error accepting NFT.");
     } finally {
-      await refreshNftsPage();
       setLoading(false);
-      setErrorMessage("");
+    }
+  };
+
+  const convertHexToStringSafe = (hex: string) => {
+    try {
+      return convertHexToString(hex);
+    } catch {
+      return hex;
     }
   };
 
@@ -94,7 +95,7 @@ const UserNFTs: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-gradient-to-r from-purple-600 to-indigo-800 p-6">
-      <h1 className="text-3xl font-bold text-white mb-8">Pending NFTs</h1>
+      <h1 className="text-3xl font-bold text-white mb-8">Pending Transfer NFTs</h1>
 
       {loading ? (
         <p className="text-lg text-white animate-pulse">Loading NFTs...</p>
@@ -102,21 +103,23 @@ const UserNFTs: React.FC = () => {
         <p className="text-red-400 text-lg">{errorMessage}</p>
       ) : nfts.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl">
-          {nfts.map((nft) => (
-            <NFTCardAcceptOffer
-              key={nft.nftID}
-              nftID={nft.nftID}
-              uri={nft.uri}
-              onAccept={() => {
-                const offerIndex = nft.offers[0]?.nft_offer_index;
-                if (offerIndex) {
-                  acceptNFTWithCrossmark(nft.nftID, offerIndex);
-                } else {
-                  setErrorMessage("No available offer to accept.");
-                }
-              }}
-            />
-          ))}
+          {nfts.map((nft) =>
+            nft.offers.map((offer, index) => (
+              <NFTCardAcceptOffer
+                key={`${nft.id}-${index}`}
+                nftID={nft.nftID}
+                uri={convertHexToStringSafe(nft.uri)}
+                onAccept={() => {
+                  const offerIndex = offer.nft_offer_index;
+                  if (offerIndex) {
+                    acceptNFTWithCrossmark(nft.id, offerIndex);
+                  } else {
+                    setErrorMessage("No available offer to accept.");
+                  }
+                }}
+              />
+            ))
+          )}
         </div>
       ) : (
         <p className="text-white text-lg">No pending NFTs found.</p>
@@ -125,4 +128,4 @@ const UserNFTs: React.FC = () => {
   );
 };
 
-export default UserNFTs;
+export default UserNFTsPendingTransfer;

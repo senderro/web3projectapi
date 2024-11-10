@@ -1,14 +1,18 @@
-"use client";
+'use client';
 
 import React, { useEffect, useState } from 'react';
 import NFTCard from '@/components/NFTCard';
 import { AccountNFToken } from 'xrpl';
+import sdk from '@crossmarkio/sdk';
+import { xrpToDrops } from 'xrpl';
 
 interface NFTData {
   name: string;
   description: string;
   base64image: string;
   gameAddress: string;
+  nftId: string;
+  uri: string;
 }
 
 interface GameBlock {
@@ -22,60 +26,59 @@ const UserNFTs = () => {
   const [nftDetails, setNftDetails] = useState<GameBlock[]>([]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
-  const [activeGame, setActiveGame] = useState<string | null>(null); // Estado para controlar qual jogo está ativo
+  const [activeGame, setActiveGame] = useState<string | null>(null);
+  const [selectedNFT, setSelectedNFT] = useState<NFTData | null>(null);
+  const [sessionAddress, setSessionAddress] = useState<string>('');
+
+  const [soldAddress, setSoldAddress] = useState<string>(''); 
+  const [soldPrice, setSoldPrice] = useState<string>(''); 
   console.log(nfts);
   useEffect(() => {
     const fetchNFTs = async () => {
       try {
-        // Busca a sessão do usuário logado
         const sessionRes = await fetch('/api/session');
         if (!sessionRes.ok) {
-          setMessage('Você precisa estar logado para ver seus NFTs.');
+          setMessage('You need to be logged in to view your NFTs.');
           setLoading(false);
           return;
         }
 
         const session = await sessionRes.json();
         if (session.isLoggedIn && session.address) {
-          // Faz a requisição para buscar os NFTs do usuário logado
+          setSessionAddress(session.address);
           const nftsRes = await fetch(`/api/getAccountNFTs/${session.address}`);
 
           if (!nftsRes.ok) {
-            setMessage('Erro ao buscar NFTs.');
+            setMessage('Error fetching NFTs.');
             setLoading(false);
             return;
           }
 
           const nftsData = await nftsRes.json();
-
           if (nftsData.nfts.length === 0) {
-            setMessage('Nenhum NFT encontrado para este endereço.');
+            setMessage('No NFTs found for this address.');
           } else {
             setNfts(nftsData.nfts);
 
-            // Para cada NFT, buscamos os dados da URI e agrupamos por gameAddress
             const nftDetailsPromises = nftsData.nfts.map(async (nft: AccountNFToken) => {
               const uriData = await fetchNftData(nft.URI as string);
               const gameAddress = uriData.gameAddress || 'Unknown Issuer';
 
-              // Verifica se já temos um bloco para o gameAddress
               const existingBlock = nftDetails.find(block => block.gameAddress === gameAddress);
-
-              // Se já existe um bloco, apenas adicionamos o NFT nele
               if (existingBlock) {
                 existingBlock.nfts.push({
                   name: uriData.name || 'Unknown Name',
                   description: uriData.description || 'No description available',
                   base64image: uriData.base64image || '',
                   gameAddress: gameAddress,
+                  nftId: nft.NFTokenID,
+                  uri: nft.URI as string
                 });
                 return existingBlock;
               }
 
-              // Se não existe o bloco, buscamos a imagem do profile
               const profileImage = await fetchProfileImage(gameAddress);
 
-              // Cria um novo bloco para o gameAddress
               return {
                 gameAddress,
                 profileImage,
@@ -85,27 +88,27 @@ const UserNFTs = () => {
                     description: uriData.description || 'No description available',
                     base64image: uriData.base64image || '',
                     gameAddress: gameAddress,
+                    nftId: nft.NFTokenID,
+                    uri: nft.URI as string
                   }
                 ]
               };
             });
 
-            // Aguardar todas as promessas serem resolvidas
             const resolvedNftDetails = await Promise.all(nftDetailsPromises);
-            setNftDetails(groupBlocks(resolvedNftDetails)); // Agrupa os blocos de NFTs por gameAddress
+            setNftDetails(groupBlocks(resolvedNftDetails));
           }
         } else {
-          setMessage('Endereço da sessão não encontrado.');
+          setMessage('Session address not found.');
         }
       } catch (error) {
-        console.error('Erro ao buscar NFTs:', error);
-        setMessage('Erro ao buscar NFTs.');
+        console.error('Error fetching NFTs:', error);
+        setMessage('Error fetching NFTs.');
       } finally {
         setLoading(false);
       }
     };
 
-    // Função para buscar os dados da URI de cada NFT
     const fetchNftData = async (uri: string) => {
       try {
         const convertHexToString = (hex: string) => {
@@ -119,107 +122,215 @@ const UserNFTs = () => {
         const url = `https://${process.env.NEXT_PUBLIC_GATEWAY_URL}/ipfs/${convertHexToString(uri)}`;
         const response = await fetch(url);
         if (response.ok) {
-          return await response.json(); // Retorna os dados do JSON na URI
+          return await response.json();
         }
       } catch (error) {
-        console.error('Erro ao buscar os dados da URI:', error);
+        console.error('Error fetching URI data:', error);
       }
-
-      return {}; // Retorna um objeto vazio se houver erro
+      return {};
     };
 
-    // Função para buscar a imagem do perfil (profileImage) do gameAddress
     const fetchProfileImage = async (gameAddress: string) => {
       try {
         const res = await fetch(`/api/devUser/${gameAddress}`);
         if (res.ok) {
           const data = await res.json();
-          return data.user?.profileImage || ''; // Retorna a imagem base64
+          return data.user?.profileImage || '';
         }
       } catch (error) {
-        console.error('Erro ao buscar a imagem de perfil:', error);
+        console.error('Error fetching profile image:', error);
       }
-      return ''; // Retorna string vazia se não houver imagem
+      return '';
     };
 
-    // Função para agrupar os NFTs por blocos
     const groupBlocks = (nftDetailsArray: GameBlock[]) => {
       const grouped = nftDetailsArray.reduce((acc: { [key: string]: GameBlock }, currentBlock) => {
         const existingBlock = acc[currentBlock.gameAddress];
-
-        // Se já existe um bloco para este gameAddress, apenas adicionamos os NFTs
         if (existingBlock) {
           existingBlock.nfts.push(...currentBlock.nfts);
         } else {
-          // Se não existe, criamos um novo bloco
           acc[currentBlock.gameAddress] = currentBlock;
         }
         return acc;
       }, {});
 
-      return Object.values(grouped); // Retorna os blocos agrupados
+      return Object.values(grouped);
     };
 
     fetchNFTs();
   }, []);
 
   const handleGameClick = (gameAddress: string) => {
-    setActiveGame(gameAddress); // Ativa o jogo quando o bloco é clicado
+    setActiveGame(gameAddress);
   };
 
   const handleBackClick = () => {
-    setActiveGame(null); // Volta para a visão dos blocos
+    setActiveGame(null);
+    setSelectedNFT(null);
+  };
+
+  const handleOpenSellModal = (nft: NFTData) => {
+    setSelectedNFT(nft);
+  };
+
+  const createNFTSellOfferWithCrossmark = async (nftID: string, destination: string, price: string, uri: string) => {
+    try {
+      setLoading(true);
+      if (!sessionAddress) {
+        setMessage('Session address not found. Please log in again.');
+        setLoading(false);
+        return;
+      }
+
+      if (!nftID || !destination || !price) {
+        setLoading(false);
+        return;
+      }
+
+      const numericPrice = parseFloat(price);
+      if (isNaN(numericPrice) || numericPrice <= 0) {
+        setMessage('Please enter a valid price.');
+        setLoading(false);
+        return;
+      }
+
+      const { response } = await sdk.async.signAndSubmitAndWait({
+        TransactionType: "NFTokenCreateOffer",
+        Account: sessionAddress,
+        NFTokenID: nftID,
+        Amount: xrpToDrops(numericPrice),
+        Destination: destination,
+        Flags: 1,
+      });
+
+      if (response.data.meta.isSuccess) {
+        alert("Sell offer created successfully!");
+
+        const apiResponse = await fetch('/api/userTransferNft', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            nftID,
+            receiveAddress: destination,
+            uri
+          }),
+        });
+
+        if (!apiResponse.ok) {
+          console.error('Error saving transfer to database:', await apiResponse.text());
+          setMessage('Error registering the transfer.');
+        } else {
+          const responseData = await apiResponse.json();
+          console.log('Transfer successfully registered:', responseData);
+        }
+      }
+    } catch (error) {
+      console.error("Error creating sell offer:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) {
-    return <div>Carregando...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-purple-600 to-indigo-800">
+        <h1 className="text-2xl text-white animate-pulse">Loading...</h1>
+      </div>
+    );
   }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Seus NFTs</h1>
-      {message && <p>{message}</p>}
+    <div className="p-6 min-h-screen bg-gradient-to-r from-purple-600 to-indigo-800">
+      <h1 className="text-3xl font-bold text-white mb-6">Your NFTs</h1>
+      {message && <p className="text-red-400 text-lg mb-4">{message}</p>}
 
       {activeGame ? (
         <div>
-          {/* Exibir NFTs do jogo ativo */}
           <button
-            className="bg-black text-white p-2 rounded-lg mb-4"
+            className="bg-gray-700 text-white p-2 rounded-lg mb-4 hover:bg-gray-600 transition"
             onClick={handleBackClick}
           >
-            Voltar para os Jogos
+            Back to Games
           </button>
           <div className="flex flex-wrap justify-center">
             {nftDetails
               .find(block => block.gameAddress === activeGame)
               ?.nfts.map((nft, index) => (
-                <NFTCard
-                  key={index}
-                  name={nft.name}
-                  description={nft.description}
-                  base64image={nft.base64image}
-                  gameAddress={nft.gameAddress}
-                />
+                <div key={index} className="relative mb-4">
+                  <button
+                    className="absolute top-0 left-0 bg-red-500 text-white px-2 py-1 rounded z-30"
+                    onClick={() => handleOpenSellModal(nft)}
+                  >
+                    Sell
+                  </button>
+                  <NFTCard
+                    name={nft.name}
+                    description={nft.description}
+                    base64image={nft.base64image}
+                    gameAddress={nft.gameAddress}
+                  />
+                </div>
               ))}
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-4">
-          {/* Exibe os blocos de jogos com as imagens de fundo */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {nftDetails.map((block, index) => (
             <div
               key={index}
-              className="game-block cursor-pointer w-40 h-40 rounded-lg shadow-md bg-cover bg-center"
+              className="cursor-pointer w-48 h-48 rounded-lg shadow-md bg-cover bg-center transform hover:scale-105 transition"
               style={{
                 backgroundImage: `url(${block.profileImage || 'default-image.jpg'})`,
               }}
               onClick={() => handleGameClick(block.gameAddress)}
             >
-              <div className="game-title p-2 bg-black bg-opacity-70 text-white text-center rounded-b-lg text-ellipsis overflow-hidden">
+              <div className="p-2 bg-black bg-opacity-70 text-white text-center rounded-b-lg">
                 {block.gameAddress}
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {selectedNFT && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
+            <h2 className="text-xl font-bold mb-4">Sell NFT: {selectedNFT.name}</h2>
+            <p className="mb-2"><strong>Description:</strong> {selectedNFT.description}</p>
+
+            <div className="my-4">
+              <h3 className="font-semibold text-lg">Sell to Other Address</h3>
+              <input
+                type="text"
+                placeholder="Buyer Address"
+                value={soldAddress}
+                onChange={(e) => setSoldAddress(e.target.value)}
+                className="border border-gray-300 rounded-lg w-full py-2 px-3 mb-2"
+              />
+              <input
+                type="number"
+                placeholder="Price"
+                value={soldPrice}
+                onChange={(e) => setSoldPrice(e.target.value)}
+                className="border border-gray-300 rounded-lg w-full py-2 px-3 mb-4"
+              />
+              <button
+                className="bg-green-500 text-white px-4 py-2 rounded w-full hover:bg-green-600 transition"
+                onClick={() => createNFTSellOfferWithCrossmark(selectedNFT?.nftId, soldAddress, soldPrice, selectedNFT.uri)}
+              >
+                Sell
+              </button>
+            </div>
+
+            <button
+              onClick={() => setSelectedNFT(null)}
+              className="mt-4 px-5 py-2 bg-gray-500 text-white rounded-lg w-full hover:bg-gray-600 transition"
+            >
+              Close
+            </button>
+          </div>
         </div>
       )}
     </div>

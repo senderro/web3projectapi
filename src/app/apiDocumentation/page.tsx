@@ -102,7 +102,7 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
           <span className="font-bold">{endpoint.path}</span>
         </div>
         <button onClick={toggleOpen} className="text-sm text-blue-600">
-          {isOpen ? 'Esconder' : 'Detalhes'}
+          {isOpen ? 'Hide' : 'Show'}
         </button>
       </div>
       {isOpen && (
