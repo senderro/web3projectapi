@@ -40,8 +40,7 @@ export async function POST(request: Request) {
     }
 
 
-    const gameAddress = auth.publicKey;
-
+    
     const authResponse = await fetch(`${baseUrl}/api/auth`, {
       method: "POST",
       headers: {
@@ -49,7 +48,9 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify(auth),
     });
-
+    
+    const gameAddress = classicAddress;
+    
     if (authResponse.status!=200) {
       const authErrorData = await authResponse.json();
       return NextResponse.json({ message: `Authentication failed: ${authErrorData.message}` }, { status: 400 });
