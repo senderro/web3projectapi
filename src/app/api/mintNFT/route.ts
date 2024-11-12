@@ -17,10 +17,10 @@ interface pinataDataMint {
 
 export async function POST(request: Request) {
   try {
-    const { auth, recipientAddress, base64image, name, description, gameMetadata }: IMintNFT = await request.json();
+    const { auth, recipientAddress, base64image, name, description, gameMetadata, classicAddress }: IMintNFT = await request.json();
     const baseUrl = getBaseUrl(request);
     // Validação básica
-    if (!secretSeed || !auth || !auth.message || !auth.signature || !auth.publicKey || !recipientAddress || !base64image || !name || !description) {
+    if (!classicAddress || !secretSeed || !auth || !auth.message || !auth.signature || !auth.publicKey || !recipientAddress || !base64image || !name || !description) {
       return NextResponse.json(
         { message: 'Todos os campos são obrigatórios.' },
         { status: 400 }

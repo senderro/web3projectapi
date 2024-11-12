@@ -27,6 +27,7 @@ export interface IMintNFT {
   name: string; 
   description: string; 
   gameMetadata: Record<string, string>;
+  classicAddress: string;
 }
 
 

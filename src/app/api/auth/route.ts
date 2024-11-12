@@ -27,9 +27,10 @@ export async function POST(request: Request) {
     }
 
     const messageHex = Buffer.from(message).toString('hex');
+    const publicKeyHex = Buffer.from(message).toString('hex');
 
     // Verificar a assinatura com a chave pública
-    const isValid = rippleKeypairs.verify(messageHex, signature, publicKey);
+    const isValid = rippleKeypairs.verify(messageHex, signature, publicKeyHex);
 
 
     if (isValid) {
