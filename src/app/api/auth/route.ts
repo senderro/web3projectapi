@@ -13,19 +13,7 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    // Verifica se o endereço público está no banco de dados
-    const devUser = await prisma.devUser.findUnique({
-      where: {
-        publicAddress: publicKey,
-        activated: true,
-      },
-    });
-
-    // Verifica se o usuário foi encontrado
-    if (!devUser) {
-      return NextResponse.json({ message: 'Usuário não encontrado.' }, { status: 404 });
-    }
-
+    
     const messageHex = Buffer.from(message).toString('hex');
     const publicKeyHex = Buffer.from(message).toString('hex');
 

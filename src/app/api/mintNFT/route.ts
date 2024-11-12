@@ -26,6 +26,20 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    const devUser = await prisma.devUser.findUnique({
+      where: {
+        publicAddress: classicAddress,
+        activated: true,
+      },
+    });
+
+    // Verifica se o usuário foi encontrado
+    if (!devUser) {
+      return NextResponse.json({ message: 'Usuário não encontrado.' }, { status: 404 });
+    }
+
+
     const gameAddress = auth.publicKey;
 
     const authResponse = await fetch(`${baseUrl}/api/auth`, {
