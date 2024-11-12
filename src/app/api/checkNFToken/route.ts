@@ -3,7 +3,7 @@ import { AccountNFToken, Client } from 'xrpl';
 
 export async function GET(request: Request) {
   try {
-    // Extrai o ID da NFT dos parâmetros da solicitação (ou da query string)
+
     const { searchParams } = new URL(request.url);
     const nftID = searchParams.get('nftID');
 
@@ -11,13 +11,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: 'NFT ID não fornecido.' }, { status: 400 });
     }
 
-    // Conecta ao XRPL (usando a Testnet)
+
     const client = new Client('wss://s.altnet.rippletest.net:51233');
     await client.connect();
 
-    // Primeiro, precisamos saber a conta que possui a NFT, então você precisa
-    // fornecer o endereço do emissor. Aqui, usamos o seu endereço público.
-    const issuerAddress = process.env.PUBLIC_ADDRESS as string; // Seu endereço público
+    const issuerAddress = process.env.PUBLIC_ADDRESS as string;
 
     // Solicita todos os NFTs emitidos pelo emissor
     const accountNFTsResponse = await client.request({
