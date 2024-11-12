@@ -282,7 +282,7 @@ const UserNFTs = () => {
               key={index}
               className="cursor-pointer w-48 h-48 rounded-lg shadow-md bg-cover bg-center transform hover:scale-105 transition"
               style={{
-                backgroundImage: `url(${block.profileImage || 'default-image.jpg'})`,
+                backgroundImage: `url(${block.profileImage || '/defaultimage.jpg'})`,
               }}
               onClick={() => handleGameClick(block.gameAddress)}
             >
