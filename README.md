@@ -7,6 +7,15 @@ The inspiration for my project came from interacting with various game developer
 ## What it does
 It is an API aimed at enabling creators to mint NFTs and set up their own item sale pages through our app, without having to pay high fees using other platforms or dealing with the complexity of implementing such a system. Selling items becomes much easier with XRPL. I also implemented an NFT marketplace where users can transfer and sell their NFTs to other users.
 
+For Game Dev:
+-You can mint nfts for yours players.
+-You can create a gameshop page and mint nfts for yours players buy.
+-Its easy to use.
+
+For players:
+-You can view your items.
+-You can sold, transfer and buy new items.
+
 ## How I built it
 I built this system primarily using Next.js, as it makes deploying the site straightforward and is easy to use for creating endpoints and working with server-side logic. Additionally, it integrates well with a free-to-use PostgreSQL database. I developed a backend to utilize XRPL, integrating it with the Crossmark wallet and leveraging its documentation. I also used Iron Session to create and manage user sessions and Prisma for a more efficient and reliable way to interact with the database. Moreover, I utilized Ripple Key Pairs to authenticate developer users so they can access the mintNft endpoint.
 
